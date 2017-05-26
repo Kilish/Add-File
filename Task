@@ -1,0 +1,92 @@
+
+import java.io.*;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.nio.charset.Charset;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributeView;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.*;
+import java.util.zip.*;
+
+
+//C:\Users\zhakypbekov_30855\Desktop\test1//Записи2.txt
+
+class Task {
+
+	 public static void main(String[] args) throws IOException {
+		 	List<ZipEntry> list = new ArrayList<ZipEntry>();
+		    List<byte[]> byteList = new ArrayList<byte[]>();
+		    boolean isContain = false;
+		    ZipEntry zipEntry;
+		    
+	        File file = new File("C:\\Users\\zhakypbekov_30855\\Desktop\\test1\\Записи.txt");
+	        File zip  = new File("C:\\Users\\zhakypbekov_30855\\Desktop\\test1\\archive.zip");
+	        
+	        
+	        ZipFile zipFile = new ZipFile(zip);
+	        InputStream fileInputStream = new FileInputStream(zip);
+	        ZipInputStream zipInputStream = new ZipInputStream(fileInputStream, Charset.defaultCharset());
+	        
+	        
+	        while((zipEntry = zipInputStream.getNextEntry()) != null){
+	        	list.add(zipEntry);
+	        }
+	        fileInputStream.close();
+	        zipInputStream.closeEntry();
+	        zipInputStream.close();
+	        InputStream in = null;
+	        for(ZipEntry e : list){
+	        	in = zipFile.getInputStream(e);
+	        	byte[] bytes = new byte[in.available()];
+	        	in.read(bytes);
+	        	byteList.add(bytes);
+	        }
+	        zipFile.close();
+	        in.close();
+
+	        /**
+	        Добавление в архив
+	        */
+	        FileOutputStream fileOutputStream = new FileOutputStream(zip);
+	        ZipOutputStream zipOutStream = new ZipOutputStream(fileOutputStream);
+	        ZipEntry entry = null;
+	        int entryIndex = -1;
+	        for(ZipEntry e : list){
+	        	if(e.toString().equals(file.getName())){
+	        		isContain = true;
+	        		entryIndex++;
+	        		break;
+	        	}
+	        	entryIndex++;
+	        }
+	        
+	        if(isContain){
+	        	entry = new ZipEntry(file.getName());
+	        	list.remove(entryIndex);
+	        	byteList.remove(entryIndex);
+	        } else{
+	        	entry = new ZipEntry("new/" + file.getName());
+	        }
+	        zipOutStream.putNextEntry(entry);
+	        InputStream inputStream = new FileInputStream(file);
+	        while(inputStream.available() > 0){
+	        	zipOutStream.write(inputStream.read());
+	        }
+	        inputStream.close();
+	        zipOutStream.closeEntry();
+	        if(list.size() != 0){
+	        	int index = 0;
+		        while(true){
+		        	if(index == byteList.size())
+		        		break;
+		        	zipOutStream.putNextEntry(list.get(index));
+		        	zipOutStream.write(byteList.get(index));
+		        	zipOutStream.closeEntry();	        	
+		        	index++;
+		        }
+	        }
+	        zipOutStream.close();
+	 }
+}
+
